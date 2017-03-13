@@ -1,0 +1,13 @@
+Standalone pluecker intersection test application
+
+Currently only hard-coded to Linux.
+
+For MSVC it seems th following flags are to be used:
+
+  /arch:AVX /arch:AVX2 /fp:fast -D_CRT_SECURE_NO_WARNINGS /GS-
+
+There is enabled USE_PLUECKER in main.cc. If that line is commented out
+then the old Woop intersection is used.
+
+If vectorization of cross(float3) is disabled it makes intersection
+test faster.
