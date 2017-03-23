@@ -17,6 +17,7 @@
 
 #include "util_optimization.h"
 #include "util_types.h"
+#include "util_time.h"
 
 #include "kernel_compat_cpu.h"
 #include "kernel_math.h"
@@ -74,6 +75,9 @@ void main() {
   triangle_intersect_precalc(dir, &isect_precalc);
 #endif
 
+  printf("Begin benchmark.\n");
+  double time_start = time_dt();
+
   for (int i = 0; i < 10000; ++i) {
     for (int prim = 0; prim < ARRAY_SIZE(prim_tri_index); ++prim) {
       Intersection isect;
@@ -105,6 +109,8 @@ void main() {
       }
     }
   }
+
+  printf("Benchmark finished in %f sec\n", time_dt() - time_start);
 }
 
 CCL_NAMESPACE_END
