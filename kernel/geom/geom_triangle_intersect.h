@@ -79,14 +79,22 @@ ccl_device_inline bool triangle_intersect_pluecker(KernelGlobals *kg,
                                                    int prim_addr)
 {
 	const uint tri_vindex = kernel_tex_fetch(__prim_tri_index, prim_addr);
+#if defined(__KERNEL_SSE2__) && defined(__KERNEL_SSE__)
+	const ssef *ssef_verts = (ssef*)&kg->__prim_tri_verts.data[tri_vindex];
+#else
 	const float4 tri_a = kernel_tex_fetch(__prim_tri_verts, tri_vindex+0),
 	             tri_b = kernel_tex_fetch(__prim_tri_verts, tri_vindex+1),
 	             tri_c = kernel_tex_fetch(__prim_tri_verts, tri_vindex+2);
+#endif
 	float t, u, v;
 	if(ray_triangle_intersect_pluecker(P, dir, isect->t,
+#if defined(__KERNEL_SSE2__) && defined(__KERNEL_SSE__)
+	                                   ssef_verts,
+#else
 	                                   float4_to_float3(tri_a),
 	                                   float4_to_float3(tri_b),
 	                                   float4_to_float3(tri_c),
+#endif
 	                                   &u, &v, &t))
 	{
 #ifdef __VISIBILITY_FLAG__

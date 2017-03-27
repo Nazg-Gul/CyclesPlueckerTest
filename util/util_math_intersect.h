@@ -292,10 +292,20 @@ ccl_device_forceinline bool ray_triangle_intersect(
 
 ccl_device_forceinline bool ray_triangle_intersect_pluecker(
         float3 ray_P, float3 ray_dir, float ray_t,
+#if defined(__KERNEL_SSE2__) && defined(__KERNEL_SSE__)
+        const ssef *ssef_verts,
+#else
         const float3 tri_a, const float3 tri_b, const float3 tri_c,
+#endif
         float *isect_u, float *isect_v, float *isect_t)
 {
 	/* Calculate vertices relative to ray origin. */
+#if defined(__KERNEL_SSE2__) && defined(__KERNEL_SSE__)
+	const float3 tri_a(ssef_verts[0]);
+	const float3 tri_b(ssef_verts[1]);
+	const float3 tri_c(ssef_verts[2]);
+#endif
+
 	const float3 v0 = tri_c - ray_P;
 	const float3 v1 = tri_a - ray_P;
 	const float3 v2 = tri_b - ray_P;
