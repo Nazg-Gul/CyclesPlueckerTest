@@ -71,8 +71,8 @@ void main() {
   float3 dir = make_float3(0.0f, 0.0f, 1.0f);
 
 #ifndef USE_PLUECKER
-  IsectPrecalc isect_precalc;
-  triangle_intersect_precalc(dir, &isect_precalc);
+  TriangleIsectPrecalc isect_precalc;
+  ray_triangle_intersect_precalc(dir, &isect_precalc);
 #endif
 
   printf("Begin benchmark.\n");
