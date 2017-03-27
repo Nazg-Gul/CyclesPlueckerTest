@@ -12,7 +12,9 @@
 #  define __KERNEL_SSSE3__
 #  define __KERNEL_SSE41__
 #  define __KERNEL_AVX__
-#  define __KERNEL_AVX2__
+#  ifdef __AVX2__
+#    define __KERNEL_AVX2__
+#  endif
 #endif
 
 #include "util_optimization.h"
