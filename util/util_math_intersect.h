@@ -301,14 +301,16 @@ ccl_device_forceinline bool ray_triangle_intersect_pluecker(
 {
 	/* Calculate vertices relative to ray origin. */
 #if defined(__KERNEL_SSE2__) && defined(__KERNEL_SSE__)
+	typedef ssef float3;
 	const float3 tri_a(ssef_verts[0]);
 	const float3 tri_b(ssef_verts[1]);
 	const float3 tri_c(ssef_verts[2]);
+	const float3 P(ray_P);
 #endif
 
-	const float3 v0 = tri_c - ray_P;
-	const float3 v1 = tri_a - ray_P;
-	const float3 v2 = tri_b - ray_P;
+	const float3 v0 = tri_c - P;
+	const float3 v1 = tri_a - P;
+	const float3 v2 = tri_b - P;
 
 	/* Calculate triangle edges. */
 	const float3 e0 = v2 - v0;
@@ -320,17 +322,17 @@ ccl_device_forceinline bool ray_triangle_intersect_pluecker(
 	const float3 crossU = cross(v2 + v0, e0);
 	const float3 crossV = cross(v0 + v1, e1);
 	const float3 crossW = cross(v1 + v2, e2);
-#ifndef __KERNEL_SSE__
+#  ifndef __KERNEL_SSE__
 	const ssef crossX(crossU.x, crossV.x, crossW.x, crossW.x);
 	const ssef crossY(crossU.y, crossV.y, crossW.y, crossW.y);
 	const ssef crossZ(crossU.z, crossV.z, crossW.z, crossW.z);
-#else
+#  else
 	ssef crossX(crossU);
 	ssef crossY(crossV);
 	ssef crossZ(crossW);
-	ssef zero(0.0f);
+	ssef zero = _mm_setzero_ps();
 	_MM_TRANSPOSE4_PS(crossX, crossY, crossZ, zero);
-#endif
+#  endif
 	const ssef dirX(ray_dir.x);
 	const ssef dirY(ray_dir.y);
 	const ssef dirZ(ray_dir.z);
@@ -353,14 +355,14 @@ ccl_device_forceinline bool ray_triangle_intersect_pluecker(
 	const float3 Ng1 = cross(e1, e0);
 	//const Vec3vfM Ng1 = stable_triangle_normal(e2,e1,e0);
 	const float3 Ng = Ng1 + Ng1;
-	const float den = dot(Ng, ray_dir);
+	const float den = dot3(Ng, float3(ray_dir));
 	/* Avoid division by 0. */
 	if(UNLIKELY(den == 0.0f)) {
 		return false;
 	}
 
 	/* Perform depth test. */
-	const float T = dot(v0, Ng);
+	const float T = dot3(v0, Ng);
 	const int sign_den = (__float_as_int(den) & 0x80000000);
 	const float sign_T = xor_signmask(T, sign_den);
 	if((sign_T < 0.0f) ||
@@ -369,25 +371,17 @@ ccl_device_forceinline bool ray_triangle_intersect_pluecker(
 		return false;
 	}
 
-#ifdef __VISIBILITY_FLAG__
-	/* visibility flag test. we do it here under the assumption
-	 * that most triangles are culled by node flags */
-	if(kernel_tex_fetch(__prim_visibility, prim_addr) & visibility)
-#endif
-	{
-		const float inv_den = 1.0f / den;
+	const float inv_den = 1.0f / den;
 #ifdef __KERNEL_SSE2__
-		UVWW *= inv_den;
-		_mm_store_ss(isect_u, UVWW);
-		_mm_store_ss(isect_v, shuffle<1,1,3,3>(UVWW));
+	UVWW *= inv_den;
+	_mm_store_ss(isect_u, UVWW);
+	_mm_store_ss(isect_v, shuffle<1,1,3,3>(UVWW));
 #else
-		*isect_u = U * inv_den;
-		*isect_v = V * inv_den;
+	*isect_u = U * inv_den;
+	*isect_v = V * inv_den;
 #endif
-		*isect_t = T * inv_den;
-		return true;
-	}
-	return false;
+	*isect_t = T * inv_den;
+	return true;
 }
 
 ccl_device bool ray_quad_intersect(float3 ray_P, float3 ray_D,

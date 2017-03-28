@@ -40,14 +40,14 @@ struct ssef
 	__forceinline ssef          (const ssef& other) { m128 = other.m128; }
 	__forceinline ssef& operator=(const ssef& other) { m128 = other.m128; return *this; }
 
-	__forceinline ssef(const __m128 a) : m128(a) {}
+	__forceinline ssef(const __m128& a) : m128(a) {}
 	__forceinline operator const __m128&(void) const { return m128; }
 	__forceinline operator       __m128&(void)       { return m128; }
 
 	__forceinline ssef          (float a) : m128(_mm_set1_ps(a)) {}
 	__forceinline ssef          (float a, float b, float c, float d) : m128(_mm_setr_ps(a, b, c, d)) {}
 
-	__forceinline explicit ssef(const __m128i a) : m128(_mm_cvtepi32_ps(a)) {}
+	__forceinline explicit ssef(const __m128i& a) : m128(_mm_cvtepi32_ps(a)) {}
 
 	////////////////////////////////////////////////////////////////////////////////
 	/// Loads and Stores
