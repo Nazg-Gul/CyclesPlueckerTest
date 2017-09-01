@@ -1,10 +1,5 @@
 #include <cstdlib>
 
-#define USE_PLUECKER
-
-#define CCL_NAMESPACE_BEGIN namespace ccl {
-#define CCL_NAMESPACE_END }
-
 #if !(defined(__GNUC__) && (defined(i386) || defined(_M_IX86)))
 #  define __KERNEL_SSE__
 #  define __KERNEL_SSE2__
@@ -17,16 +12,16 @@
 #  endif
 #endif
 
-#include "util_optimization.h"
-#include "util_types.h"
-#include "util_time.h"
+#include "util/util_optimization.h"
+#include "util/util_types.h"
+#include "util/util_time.h"
 
-#include "kernel_compat_cpu.h"
-#include "kernel_math.h"
-#include "kernel_types.h"
+#include "kernel/kernel_compat_cpu.h"
+#include "kernel/kernel_math.h"
+#include "kernel/kernel_types.h"
 #include "kernel/split/kernel_split_data_types.h"
-#include "kernel_globals.h"
-#include "kernel_random.h"
+#include "kernel/kernel_globals.h"
+#include "kernel/kernel_random.h"
 #include "kernel/geom/geom_triangle_intersect.h"
 
 // Fake data.
@@ -45,7 +40,7 @@
 CCL_NAMESPACE_BEGIN
 
 void main() {
-  KernelGlobals kg = {};
+  KernelGlobals kg;
 
   // Assign all fake data.
   kg.__prim_tri_index.data = prim_tri_index;
@@ -72,11 +67,6 @@ void main() {
   float3 P = make_float3(0.0f, 0.0f, 0.0f);
   float3 dir = make_float3(0.0f, 0.0f, 1.0f);
 
-#ifndef USE_PLUECKER
-  TriangleIsectPrecalc isect_precalc;
-  ray_triangle_intersect_precalc(dir, &isect_precalc);
-#endif
-
   printf("Begin benchmark.\n");
   double time_start = time_dt();
 
@@ -88,23 +78,13 @@ void main() {
       isect.v = 0.0f;
       isect.prim = PRIM_NONE;
       isect.object = OBJECT_NONE;
-#ifdef USE_PLUECKER
-      bool hit = triangle_intersect_pluecker(&kg,
-                                             &isect,
-                                             P,
-                                             dir,
-                                             PATH_RAY_ALL_VISIBILITY,
-                                             OBJECT_NONE,
-                                             prim);
-#else
       bool hit = triangle_intersect(&kg,
-                                    &isect_precalc,
                                     &isect,
                                     P,
+                                    dir,
                                     PATH_RAY_ALL_VISIBILITY,
                                     OBJECT_NONE,
                                     prim);
-#endif
       // Fake usage of the result, so compiler does not optimize anything.
       if (hit && isect.u > 2.0f) {
         printf("ABORT!\n");
