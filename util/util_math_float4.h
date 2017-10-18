@@ -38,7 +38,6 @@ ccl_device_inline float4 operator+(const float4& a, const float4& b);
 ccl_device_inline float4 operator-(const float4& a, const float4& b);
 ccl_device_inline float4 operator+=(float4& a, const float4& b);
 ccl_device_inline float4 operator*=(float4& a, const float4& b);
-ccl_device_inline float4 operator*=(float4& a, float f);
 ccl_device_inline float4 operator/=(float4& a, float f);
 
 ccl_device_inline int4 operator<(const float4& a, const float4& b);
@@ -83,9 +82,9 @@ template<> __forceinline const float4 shuffle<1, 1, 3, 3>(const float4& b);
 ccl_device_inline float4 select(const int4& mask,
                                 const float4& a,
                                 const float4& b);
-ccl_device_inline float4 vreduce_min(const float4& a);
-ccl_device_inline float4 vreduce_max(const float4& a);
-ccl_device_inline float4 vreduce_add(const float4& a);
+ccl_device_inline float4 reduce_min(const float4& a);
+ccl_device_inline float4 reduce_max(const float4& a);
+ccl_device_inline float4 reduce_add(const float4& a);
 #endif  /* !__KERNEL_GPU__ */
 
 /*******************************************************************************
@@ -167,11 +166,6 @@ ccl_device_inline float4 operator+=(float4& a, const float4& b)
 ccl_device_inline float4 operator*=(float4& a, const float4& b)
 {
 	return a = a * b;
-}
-
-ccl_device_inline float4 operator*=(float4& a, float f)
-{
-	return a = a * f;
 }
 
 ccl_device_inline float4 operator/=(float4& a, float f)
@@ -278,7 +272,7 @@ ccl_device_inline bool is_zero(const float4& a)
 #endif
 }
 
-ccl_device_inline float4 vreduce_add(const float4& a)
+ccl_device_inline float4 reduce_add(const float4& a)
 {
 #ifdef __KERNEL_SSE__
 #  ifdef __KERNEL_SSE3__
@@ -296,7 +290,7 @@ ccl_device_inline float4 vreduce_add(const float4& a)
 
 ccl_device_inline float average(const float4& a)
 {
-	return vreduce_add(a).x * 0.25f;
+	return reduce_add(a).x * 0.25f;
 }
 
 ccl_device_inline float len(const float4& a)
@@ -418,7 +412,7 @@ ccl_device_inline float4 mask(const int4& mask,
 	return select(mask, a, make_float4(0.0f));
 }
 
-ccl_device_inline float4 vreduce_min(const float4& a)
+ccl_device_inline float4 reduce_min(const float4& a)
 {
 #ifdef __KERNEL_SSE__
 	float4 h = min(shuffle<1,0,3,2>(a), a);
@@ -428,7 +422,7 @@ ccl_device_inline float4 vreduce_min(const float4& a)
 #endif
 }
 
-ccl_device_inline float4 vreduce_max(const float4& a)
+ccl_device_inline float4 reduce_max(const float4& a)
 {
 #ifdef __KERNEL_SSE__
 	float4 h = max(shuffle<1,0,3,2>(a), a);
@@ -436,16 +430,6 @@ ccl_device_inline float4 vreduce_max(const float4& a)
 #else
 	return make_float4(max(max(a.x, a.y), max(a.z, a.w)));
 #endif
-}
-
-ccl_device_inline float reduce_min(const float4& a)
-{
-	return _mm_cvtss_f32(vreduce_min(a));
-}
-
-ccl_device_inline float reduce_max(const float4& a)
-{
-	return _mm_cvtss_f32(vreduce_max(a));
 }
 
 ccl_device_inline float4 load_float4(const float *v)
